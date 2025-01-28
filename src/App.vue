@@ -11,8 +11,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr @click="handleEdit(user)" v-for="(user, index) in users" :key="index">
-          <td>{{ user.name }}</td>
+        <tr class="about_users" @click="handleEdit(user)" v-for="(user, index) in users" :key="index">
+          <td>{{ user.firstName }}</td>
           <td>
             <img :src="user.image" alt="User Image" class="profile-picture" />
           </td>
@@ -23,42 +23,66 @@
     </table>
 
 
-
-    <div v-if="editUser" class="modal">
-    <div class="modal-content">
-      <span class="close-btn" @click="editUser = null">&times;</span>
+    <div v-if="editUser" class="modal" @click.self="closeModal">
+      <div class="modal-content">
+        <span class="close-btn" @click="editUser = null">&times;</span>
       <h2>About User</h2>
       <img :src="editUser.image" alt="Profile Picture" class="modal-picture" />
-      <p><strong>Name:</strong> {{ editUser.name }}</p>
+      <p><strong>Name:</strong> {{ editUser.firstName + ' ' + editUser.lastName }}</p>
       <p><strong>Email:</strong> {{ editUser.email }}</p>
       <p><strong>Phone:</strong> {{ editUser.phone }}</p>
       <p><strong>Company:</strong> {{ editUser.company.name }}</p>
+      </div>
     </div>
-  </div>
-    
   </div>
 </template>
 
 <script setup>
 
+
 import { ref, onMounted, onUnmounted } from "vue";
-import users from "./users.json";
 
-const editUser = ref()
+// Reaktiv o'zgaruvchilar
+const users = ref([]);
+const editUser = ref(null);
 
-function handleEdit(item){
-  console.log(item)
-  editUser.value = item
+// Foydalanuvchi ma'lumotlarini API'dan olish
+async function getData() {
+  const apiUrl = 'https://dummyjson.com/users';
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    const data = await response.json();
+    users.value = data.users;  // Olingan foydalanuvchilarni `users`ga o'rnatish
+  } catch (error) {
+    console.error('There was a problem with the fetch operation:', error);
+  }
 }
 
+// Foydalanuvchi haqida ma'lumotni tahrirlash
+function handleEdit(item) {
+  console.log(item);
+  editUser.value = item;
+}
+
+// Modalni yopish
+function closeModal() {
+  editUser.value = null;
+}
+
+// Modal oynani qochirish uchun 'Escape' tugmasini qo'shish
 function closeOnEscape(event) {
   if (event.key === "Escape") {
     editUser.value = null;
   }
 }
 
+// Komponentni DOMga qo'shish va o'chirish
 onMounted(() => {
   window.addEventListener("keydown", closeOnEscape);
+  getData(); // Komponent o'rnatilganda API'dan ma'lumot olish
 });
 
 onUnmounted(() => {
@@ -77,6 +101,13 @@ onUnmounted(() => {
 }
 .user_info {
   color: #007bff;
+}
+.about_users {
+  cursor: pointer;
+}
+.about_users:hover {
+  background-color: #cfcfcf;
+  transition: all 0.3s ease-in-out;                           
 }
 
 h1 {
@@ -109,6 +140,7 @@ h1 {
   width: 50px;
   height: 50px;
   border-radius: 50%;
+  object-fit: cover;
 }
 
 
